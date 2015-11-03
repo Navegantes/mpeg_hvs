@@ -34,7 +34,10 @@ class Encoder:
 		self.nframes = 0
 		self.fps = (cv2.VideoCapture(videoName)).get(cv2.cv.CV_CAP_PROP_FPS)
 		self.video = self.readVideo(videoName)
-		self.output = open('./outputs/'+videoName.split('/')[-1].split('.')[0] + '.txt', 'w')
+		if self.hvsqm == 0:
+			self.output = open('./outputs/'+videoName.split('/')[-1].split('.')[0] + '.txt', 'w')
+		else:
+			self.output = open('./outputs/'+videoName.split('/')[-1].split('.')[0] + '_hvs' + '.txt', 'w')
 		self.sspace = sspace
 		self.search = search
 		self.quality = quality
