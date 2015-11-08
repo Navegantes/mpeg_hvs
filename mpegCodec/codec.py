@@ -102,10 +102,10 @@ class Encoder:
 		return auxImage
 		
 	def genHVStables (self):
-		tables = [[0 for x in range (self.sspace)] for x in range (self.sspace)]
+		tables = [[0 for x in range (self.sspace+1)] for x in range (self.sspace+1)]
 		qflat = self.flat*np.ones((8,8,3), np.float32)
-		for x in range (self.sspace):
-			for y in range (self.sspace):
+		for x in range (self.sspace+1):
+			for y in range (self.sspace+1):
 				mh = x
 				mt = y
 				
@@ -182,6 +182,7 @@ class Encoder:
 				self.output.write('B'+' ')
 				vecsz = len(bframe.motionVec)
 				MV = list(np.zeros(vecsz))
+#				print len(MV)
 				for j in range (vecsz):
 					if bframe.motionVec[j][1] == 'i':
 						self.output.write(':'+str(bframe.motionVec[j][1])+','+str(bframe.motionVec[j][2])+','+str(bframe.motionVec[j][3])+','+str(bframe.motionVec[j][4])+','+str(bframe.motionVec[j][5]))
@@ -470,12 +471,12 @@ class Decoder:
 		self.mbr, self.mbc = [8, 8]
 		
 	def genHVStables (self):
-		tables = [[0 for x in range (int(self.sspace))] for x in range (int(self.sspace))]
+		tables = [[0 for x in range (int(self.sspace)+1)] for x in range (int(self.sspace)+1)]
 		
 		qflat = float(self.flat)*np.ones((8,8,3), np.float32)
 #		print qflat
-		for x in range (int(self.sspace)):
-			for y in range (int(self.sspace)):
+		for x in range (int(self.sspace)+1):
+			for y in range (int(self.sspace)+1):
 				mh = x
 				mt = y
 				

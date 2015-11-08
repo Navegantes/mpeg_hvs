@@ -119,6 +119,8 @@ class Encoder:
 				for x in range(0, M, m):
 					for y in range(0, N, n):
 						#SELEÇAO DE TABELA
+#						print len(self.MV)
+#						print x, y, M, N, vec, len(self.MV), int(abs(self.MV[vec][0])), int(abs(self.MV[vec][1]))
 						Z = self.Zhvs[ int(abs(self.MV[vec][0])) ][ int(abs(self.MV[vec][1])) ]
 						vec += 1
 						
@@ -129,6 +131,7 @@ class Encoder:
 #								print sbimg.shape, ch
 								coefs = cv2.dct(sbimg)
 								#QUANTIZAÇÃO/LIMIARIZAÇÃO
+#								print coefs.shape, Z.shape
 								zcoefs = np.round_( coefs/Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
 								#CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
 								seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
