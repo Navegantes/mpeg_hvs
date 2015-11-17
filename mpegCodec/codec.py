@@ -120,7 +120,7 @@ class Encoder:
 						ai = (mh*self.oR*0.5*i)/(self.mbr*self.mbc)
 						aj = (mt*self.oC*0.5*j)/(self.mbr*self.mbc)
 						aij = ai + aj
-						if v/3.0==0.0:
+						if v==0.0:
 							g[i,j] = 0.0
 						else:
 							g[i,j] = (6.1+7.3*abs(log(v/3.0))**3.0)*(v*aij**2.0)*exp(-2.0*aij*(v+2.0)/45.9)
@@ -492,40 +492,22 @@ class Decoder:
 						ai = (mh*int(self.shape[0])*0.5*i)/(int(self.mbr)*int(self.mbc))
 						aj = (mt*int(self.shape[1]*0.5*j))/(int(self.mbr)*int(self.mbc))
 						aij = ai + aj
-						if v/3.0==0.0:
-#							v = sys.float_info.min*sys.float_info.epsilon
-#							g[i,j] = (6.1+7.3*abs(log(v))**3)*(v*aij**2)*exp(-2*aij*(v+2)/45.9)
+						if v==0.0:
 							g[i,j] = 0.0
-#							print 'if',g[i,j]
 						else:
-#							print v
 							g[i,j] = (6.1+7.3*abs(log(v/3.0))**3.0)*(v*aij**2.0)*exp(-2.0*aij*(v+2.0)/45.9)
-#							print 'else', g[i,j]
 				
 				gmax = np.max(g)
-#				print x, y, gmax
-#				print g
-#				if gmax==0.0:
-#					gmax = sys.float_info.min*sys.float_info.epsilon
-#					print type(gmax)
-#					print type(g/gmax)
-#				qhvs = (mh+mt)*(self.p*(1-(g/gmax)))
 				for i in range (8):
 					for j in range (8):
-#						print g[i,j], gmax
-#						if g[i,j,0] == 0.0:
-#							g[i,j] = sys.float_info.min*sys.float_info.epsilon
-#						print g[i,j],gmax,
 						if gmax == 0.0:
 							qhvs[i,j] = 0.0
 						elif gmax==g[i,j,0]:
 							qhvs[i,j] = 0.0
 						else:
 							qhvs[i,j] = (mh+mt)/(float(self.p)*(1.-(g[i,j]/gmax)))
-#						print qhvs[i,j]
 
 				tables[x][y] = qflat + qhvs
-#				print gmax, x, y, tables[x][y]
 				
 		self.hvstables = tables
 		
