@@ -131,7 +131,7 @@ class Encoder:
 							elif gmax==g[i,j,0]:
 								qhvs[i,j] = 0.0
 							else:
-								qhvs[i,j] = (mh+mt)/(float(self.p)*(1.-(g[i,j]/gmax)))
+								qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
 
 				tables[x][y] = qflat + qhvs
 				
@@ -500,7 +500,7 @@ class Decoder:
 							elif gmax==g[i,j,0]:
 								qhvs[i,j] = 0.0
 							else:
-								qhvs[i,j] = (mh+mt)/(float(self.p)*(1.-(g[i,j]/gmax)))
+								qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
 
 				tables[x][y] = qflat + qhvs
 				
