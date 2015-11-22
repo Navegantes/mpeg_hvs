@@ -10,6 +10,7 @@ from frames import mpeg
 from frames import MJPEGcodec as jpeg
 from frames import MJPEGhvs as jpeghvs
 from math import sqrt, log, exp
+from utils import detect_version as dtv
 
 class Encoder:
 	def __init__(self, videoName, quality = 75, sspace = 16, mode = '420', search = 0, hvsqm = 0, flat = 10.0, p = 2.0):
@@ -53,6 +54,10 @@ class Encoder:
 		About: This method store a video in a list.
 		'''
 		video = cv2.VideoCapture(videoName)
+		if(dtv.opencv_version() >= 3):
+			self.fps = video.get(cv2.CAP_PROP_FPS)
+		else:
+			self.fps = video.get(cv2.cv.CV_CAP_PROP_FPS)
 		ret, fr = video.read()
 		sequence = []
 		sequence.append(self.resize(cv2.cvtColor(fr, cv2.COLOR_BGR2YCR_CB)))
@@ -63,13 +68,13 @@ class Encoder:
 			if ret != False:
 				sequence.append(self.resize(cv2.cvtColor(fr, cv2.COLOR_BGR2YCR_CB)))
 		video.release()
-		
+        
 		self.nframes = len(sequence)
-		
+        
 		if (len(sequence)-1)%6 != 0:
 			for i in range(6-(len(sequence)-1)%6):
 				sequence.append(sequence[-1])
-		
+        
 		return sequence
 	
 	def resize (self, frame):
@@ -132,6 +137,8 @@ class Encoder:
 								qhvs[i,j] = 0.0
 							else:
 								qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
+				else:
+					pass
 
 				tables[x][y] = qflat + qhvs
 				
@@ -501,6 +508,8 @@ class Decoder:
 								qhvs[i,j] = 0.0
 							else:
 								qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
+				else:
+					pass						
 
 				tables[x][y] = qflat + qhvs
 				
