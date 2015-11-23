@@ -479,22 +479,21 @@ class Decoder:
         
         qflat = float(self.flat)*np.ones((8,8,3), np.float32)
 #        print qflat
-        for x in range (int(self.sspace)+1):
-            for y in range (int(self.sspace)+1):
-                mh = x
-                mt = y
+        for mh in range (int(self.sspace)+1):
+            for mt in range (int(self.sspace)+1):
                 
                 vh = float(mh*float(self.fps))/float(self.shape[0])
                 vt = float(mt*float(self.fps))/float(self.shape[1])
-                va = sqrt(vh**2+vt**2)
+                v = sqrt(vh**2+vt**2)
                 qhvs = np.zeros((8,8,3), np.float32)
                 g = np.zeros((8,8,3), np.float32)
-                if va != 0:
+                const1 = (mh*int(self.shape[0]))/(int(self.mbr)*int(self.mbc))
+                const2 = (mt*int(self.shape[1]))/(int(self.mbr)*int(self.mbc))
+                if v != 0:
                     for i in range (8):
                         for j in range (8):
-                            v = va
-                            ai = (mh*int(self.shape[0])*0.5*i)/(int(self.mbr)*int(self.mbc))
-                            aj = (mt*int(self.shape[1]*0.5*j))/(int(self.mbr)*int(self.mbc))
+                            ai = const1*0.5*i
+                            aj = const2*0.5*j
                             aij = ai + aj
                             g[i,j] = (6.1+7.3*abs(log(v/3.0))**3.0)*(v*aij**2.0)*exp(-2.0*aij*(v+2.0)/45.9)
                 
@@ -506,11 +505,11 @@ class Decoder:
                             elif gmax==g[i,j,0]:
                                 qhvs[i,j] = 0.0
                             else:
-                                qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
+                                qhvs[i,j] = (mh+mt)/float(self.p)*(1.-(g[i,j]/gmax))
                 else:
                     pass                        
 
-                tables[x][y] = qflat + qhvs
+                tables[mh][mt] = qflat + qhvs
                 
         self.hvstables = tables
         
