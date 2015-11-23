@@ -211,7 +211,10 @@ class Decoder:
                         for y in range (0, self.N, self.mbc):
                             for a in range (x, x+self.mbr, self.R):
                                 for b in range (y, y+self.mbc, self.C):
-                                    img[a:a+self.R, b:b+self.C, ch] = h.zagzig(seqrec[(a/8)*cBLK + (b/8)])									
+                                    img[a:a+self.R, b:b+self.C, ch] = h.zagzig(seqrec[(a/8)*cBLK + (b/8)])
+#                    for i in range (self.nBlkRows):
+#                        for j in range (self.nBlkCols):
+#                            img[self.R*i:self.R*i+self.R, self.C*j:self.C*j+self.C, ch] = h.zagzig(seqrec[i*self.nBlkCols + j])
                                     
                     for x in range (0, self.M, self.mbr):
                         for y in range (0, self.N, self.mbc):
