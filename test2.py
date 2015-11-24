@@ -22,4 +22,4 @@ root.withdraw()
 ### DECODER ###
 vdName = askopenfilename().__str__()
 mpeg = codec.Decoder(vdName)
-mpeg.run()
+mpeg.run() 

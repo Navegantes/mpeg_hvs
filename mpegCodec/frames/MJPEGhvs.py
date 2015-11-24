@@ -78,7 +78,7 @@ class Encoder:
 								coefs = cv2.dct(sbimg)
 								#QUANTIZAÇÃO/LIMIARIZAÇÃO
 						
-								zcoefs = np.round( coefs/Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+								zcoefs = np.round( coefs/Z[:,:] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
 #								print Z[:,:,ch],
 								seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
 #								print seq,
@@ -132,7 +132,7 @@ class Encoder:
 								coefs = cv2.dct(sbimg)
 								#QUANTIZAÇÃO/LIMIARIZAÇÃO
 #								print coefs.shape, Z.shape
-								zcoefs = np.round_( coefs/Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+								zcoefs = np.round_( coefs/Z[:,:] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
 								#CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
 								seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
 								hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
@@ -224,7 +224,7 @@ class Decoder:
                                 Z = self.hvstables[int((abs(self.motionVec[count][1])+abs(self.motionVec[count][3]))/2.)][int((abs(self.motionVec[count][2])+abs(self.motionVec[count][4]))/2.)]
                             for i in range (x, x+self.mbr, self.R):
                                 for j in range (y, y+self.mbc, self.C):
-                                    img[i:i+self.R, j:j+self.C, ch] = np.round_(cv2.idct( img[i:i+self.R, j:j+self.C, ch]*Z[:,:,ch] ))
+                                    img[i:i+self.R, j:j+self.C, ch] = np.round_(cv2.idct( img[i:i+self.R, j:j+self.C, ch]*Z[:,:] ))
                             count += 1
                 else:
                     nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
@@ -240,7 +240,7 @@ class Decoder:
                                 Z = self.hvstables[abs(self.motionVec[count][1])][abs(self.motionVec[count][2])]
                             else:
                                 Z = self.hvstables[int(np.floor((abs(self.motionVec[count][1])+abs(self.motionVec[count][3]))/2.))][int(np.floor((abs(self.motionVec[count][2])+abs(self.motionVec[count][4]))/2.))]										
-                            img[x:x+self.mbr, y:y+self.mbc, ch] = upsample(np.round_(cv2.idct(h.zagzig(seqrec[x*cBLK + y])*Z[:,:,ch])), self.mode, 2)
+                            img[x:x+self.mbr, y:y+self.mbc, ch] = upsample(np.round_(cv2.idct(h.zagzig(seqrec[x*cBLK + y])*Z[:,:])), self.mode, 2)
                             count += 1
 																												
         return img

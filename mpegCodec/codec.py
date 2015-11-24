@@ -108,15 +108,15 @@ class Encoder:
         
     def genHVStables (self):
         tables = [[0 for x in range (self.sspace+1)] for x in range (self.sspace+1)]
-        qflat = self.flat*np.ones((8,8,3), np.float32)
+        qflat = self.flat*np.ones((8,8), np.float32)
         for mh in range (self.sspace+1):
             for mt in range (self.sspace+1):
                 
                 vh = float(mh*self.fps)/float(self.oR)
                 vt = float(mt*self.fps)/float(self.oC)
                 v = sqrt(vh**2+vt**2)
-                qhvs = np.zeros((8,8,3), np.float32)
-                g = np.zeros((8,8,3), np.float32)
+                qhvs = np.zeros((8,8), np.float32)
+                g = np.zeros((8,8), np.float32)
                 const1 = (mh*self.oR)/(self.mbr*self.mbc)
                 const2 = (mt*self.oC)/(self.mbr*self.mbc)
                 if v != 0:
@@ -132,7 +132,7 @@ class Encoder:
                         for j in range (8):
                             if gmax == 0.0:
                                 qhvs[i,j] = 0.0
-                            elif gmax==g[i,j,0]:
+                            elif gmax==g[i,j]:
                                 qhvs[i,j] = 0.0
                             else:
                                 qhvs[i,j] = (mh+mt)/float(self.p)*(1.-(g[i,j]/gmax))
@@ -477,7 +477,7 @@ class Decoder:
     def genHVStables (self):
         tables = [[0 for x in range (int(self.sspace)+1)] for x in range (int(self.sspace)+1)]
         
-        qflat = float(self.flat)*np.ones((8,8,3), np.float32)
+        qflat = float(self.flat)*np.ones((8,8), np.float32)
 #        print qflat
         for mh in range (int(self.sspace)+1):
             for mt in range (int(self.sspace)+1):
@@ -485,8 +485,8 @@ class Decoder:
                 vh = float(mh*float(self.fps))/float(self.shape[0])
                 vt = float(mt*float(self.fps))/float(self.shape[1])
                 v = sqrt(vh**2+vt**2)
-                qhvs = np.zeros((8,8,3), np.float32)
-                g = np.zeros((8,8,3), np.float32)
+                qhvs = np.zeros((8,8), np.float32)
+                g = np.zeros((8,8), np.float32)
                 const1 = (mh*int(self.shape[0]))/(int(self.mbr)*int(self.mbc))
                 const2 = (mt*int(self.shape[1]))/(int(self.mbr)*int(self.mbc))
                 if v != 0:
@@ -502,7 +502,7 @@ class Decoder:
                         for j in range (8):
                             if gmax == 0.0:
                                 qhvs[i,j] = 0.0
-                            elif gmax==g[i,j,0]:
+                            elif gmax==g[i,j]:
                                 qhvs[i,j] = 0.0
                             else:
                                 qhvs[i,j] = (mh+mt)/float(self.p)*(1.-(g[i,j]/gmax))
@@ -631,7 +631,6 @@ class Decoder:
                 sequence.append([countfr, jpeg.Decoder(ch, self.hufftables, self.Z, [self.shape, self.quality, self.mode])._run_(), None])
                 count += 1
                 countfr += 1
-                print 'Progress: %d/%d' % (countfr,nauxfr)
             
             elif aux[0] == 'P':
                 vecSTR = aux[1][1:].split(':')
@@ -651,7 +650,6 @@ class Decoder:
                     sequence.append([countfr, jpeg.Decoder(ch, self.hufftables, self.Z, [self.shape, self.quality, self.mode])._run_(), motionVec])
                 count += 1
                 countfr += 1
-                print 'Progress: %d/%d' % (countfr,nauxfr)
             
             elif aux[0] == 'B':
                 vecSTR = aux[1][1:].split(':')
@@ -678,7 +676,7 @@ class Decoder:
                     sequence.append([countfr, jpeg.Decoder(ch, self.hufftables, self.Z, [self.shape, self.quality, self.mode])._run_(), motionVec])
                 count += 1
                 countfr += 1
-                print 'Progress: %d/%d' % (countfr,nauxfr)
+            print 'Progress: %d/%d' % (countfr,nauxfr)
         
         count = 0
         sequence.sort(key=lambda tup: tup[0])
