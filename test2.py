@@ -16,7 +16,7 @@ root.withdraw()
 
 ### ENCODER ###
 #vdName = askopenfilename(parent=root, title="Enter with a video file.").__str__()
-#mpeg = codec.Encoder(vdName, quality = 75, sspace = 16, mode = '420', search = 1, hvsqm = 1, flat = 10.0, p = 2.0)
+#mpeg = codec.Encoder(vdName, quality = 75, sspace = 16, mode = '420', search = 1, hvsqm = 0, flat = 10.0, p = 2.0)
 #mpeg.run()
 
 ### DECODER ###
