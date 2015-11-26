@@ -52,6 +52,7 @@ class Encoder:
 		'''
 		'''
 		
+        ################################### CÓDIGO VELHO ###################################
 		hf = h.HuffCoDec(self.hufftables)        #flnm = self.filepath.split('/')[-1:][0].split('.')[0] + '.huff'        #fo = open(flnm,'w')        #fo.write(str(self.Mo) + ',' + str(self.No) + ',' + str(self.Do) + ',' +         #         str(self.qually) + ',' + self.mode + '\n')
 		outseq = []
 		
@@ -121,7 +122,7 @@ class Encoder:
 						#SELEÇAO DE TABELA
 #						print len(self.MV)
 #						print x, y, M, N, vec, len(self.MV), int(abs(self.MV[vec][0])), int(abs(self.MV[vec][1]))
-						Z = self.Zhvs[ int(abs(self.MV[vec][0])) ][ int(abs(self.MV[vec][1])) ]
+						Z = self.Zhvs[ int(abs(self.MV[vec][0])) ][ int(abs(self.MV[vec][1])) ]       # DÚVIDA AQUI
 						vec += 1
 						
 						for i in range(x, x+m, self.r):
@@ -152,6 +153,7 @@ class Encoder:
 		#print '- Encoder Complete...'
 		#return (self.CRate, self.Redunc, self.NumBits)
 		return outseq
+        ################################### FIM CÓDIGO VELHO ###################################
 		
 		
 	def Outcomes(self):
@@ -197,9 +199,35 @@ class Decoder:
         ################################### CÓDIGO VELHO ###################################
         hf = h.HuffCoDec(self.hufftables)
         img = np.zeros((self.M,self.N,self.D), np.float32)
+        r, c, chnl = self.R, self.C, self.NCHNL
+        #print(str(self.M) + " " + str(self.N) + " " + str(self.D))
 		
         if self.mode == '444':
-            pass
+            for ch in range (chnl):
+                nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
+                count = 0
+                
+                for x in range(0,self.nBlkRows,2):
+                    for y in range(0,self.nBlkCols,2):
+                        
+                        # Quantization table
+                        if len(self.motionVec[count]) == 2:
+                            Z = self.hvstables[abs(self.motionVec[count][0])][abs(self.motionVec[count][1])]
+                        elif len(self.motionVec[count]) == 3:
+                            Z = self.hvstables[abs(self.motionVec[count][1])][abs(self.motionVec[count][2])]
+                        else:
+                            Z = self.hvstables[int((abs(self.motionVec[count][1])+abs(self.motionVec[count][3]))/2.)][int((abs(self.motionVec[count][2])+abs(self.motionVec[count][4]))/2.)]
+                            
+                        for i in range (x, x+2):
+                            for j in range (y, y+2):
+                                blk = h.zagzig(seqrec[i*self.nBlkCols + j])
+#                                print(str(i) + " " + str(j))
+#                                print(str(r*i) + " - " + str(r*i+r) + " ; " + str(c*j) + " - " + str(c*j+c))
+                                img[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z[:,:] ))
+                        
+                        count += 1
+                                    
+                                    
 
         elif self.mode == '420':
             for ch in range (3):
@@ -243,67 +271,11 @@ class Decoder:
                                 Z = self.hvstables[int(np.floor((abs(self.motionVec[count][1])+abs(self.motionVec[count][3]))/2.))][int(np.floor((abs(self.motionVec[count][2])+abs(self.motionVec[count][4]))/2.))]										
                             img[x:x+self.mbr, y:y+self.mbc, ch] = upsample(np.round_(cv2.idct(h.zagzig(seqrec[x*cBLK + y])*Z[:,:])), self.mode, 2)
                             count += 1
-																												
+																										
+        img = img+128.0
         return img
         ################################### FIM CÓDIGO VELHO ###################################
         
-        ################################### CÓDIGO NOVO ###################################
-        hf = h.HuffCoDec(self.hufftables)
-        r, c, chnl = self.R, self.C, self.NCHNL
-        Z = self.Z
-        
-        #hufcd = self.huffcodes#self.fl.readline()[:-1]
-        if self.mode == '444':
-            for ch in range(chnl):                #hufcd = self.fl.readline()[:-1]            #    print hufcd[0:20]
-                nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
-                for i in range(self.nBlkRows):
-                    for j in range(self.nBlkCols):
-                        blk = h.zagzig(seqrec[i*self.nBlkCols + j])
-                        self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z[:,:,ch] ))
-                        
-        elif self.mode == '420':
-            #import math as m
-            if chnl == 1:
-                rYmg = self.imRaw
-            else:                #Y = self.imRaw[:,:,0]
-                Y = np.zeros( (self.M, self.N) )
-                dims, CrCb = h.adjImg( downsample(np.zeros( (self.M, self.N, 2) ), self.mode)[1] )
-                rYmg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
-                
-            for ch in range(chnl):
-                #hufcd = self.fl.readline()[:-1]
-                if ch == 0:
-                    rBLK = self.nBlkRows
-                    cBLK = self.nBlkCols
-                else:
-                    rBLK, cBLK = int(np.floor(dims[0]/self.R)), int(np.floor(dims[1]/self.C))
-            #    print hufcd[0:20]
-                nblk, self.seqrec = hf.invhuff(self.huffcodes[ch], ch)
-                for i in range(rBLK):
-                    for j in range(cBLK):
-                        blk = h.zagzig(self.seqrec[i*cBLK + j])
-                        #print rYmg[ch][r*i:r*i+r, c*j:c*j+c].shape, ch, i, j
-                        rYmg[ch][r*i:r*i+r, c*j:c*j+c] = np.round_( cv2.idct( blk*Z[:,:,ch] ))
-            # UPSAMPLE
-            if chnl == 1:
-                self.imRaw = rYmg #[:self.Mo, : self.No]
-            else:
-                self.imRaw[:,:,0] = rYmg[0]
-                self.imRaw[:,:,1] = upsample(rYmg[1], self.mode)[:self.M, :self.N]
-                self.imRaw[:,:,2] = upsample(rYmg[2], self.mode)[:self.M, :self.N]
-        
-        #self.fl.close()
-        
-#        imrec = cv2.cvtColor((self.imRaw[:self.Mo, :self.No]+128), cv2.COLOR_YCR_CB2BGR)
-#        imrec = self.imRaw[:self.Mo, :self.No]+128
-        imrec = self.imRaw+128.0
-#        imrec[imrec>255.0]=255.0
-#        imrec[imrec<0.0]=0.0
-								
-        #print 'Mjpeg Decoder Complete...'
-        
-        return imrec
-        ################################### FIM CÓDIGO NOVO ###################################
 
 def downsample(mat, mode):
     '''
