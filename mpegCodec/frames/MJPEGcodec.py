@@ -10,120 +10,123 @@ import numpy as np
 import cv2
 
 class Encoder:
-	def __init__(self, frame, qually, hufftables, Z, mode='444'):
-		'''
-		'''
-		
-		#TRATA AS DIMENSOES DA IMAGEM
-		(Madj, Nadj, Dadj), self.img = h.adjImg(np.float32(frame))         #		imOrig = frame  #cv2.imread(filepath,1)        #self.filepath = filepath
-		self.mode = mode
-		self.hufftables = hufftables
-		self.CRate = 0; self.Redunc = 0                #Taxa de compressão e Redundancia
-		self.avgBits = 0; self.NumBits = 0             #Media de bits e numero de bits
-		self.qually = qually                           #Qualidade
-		self.M, self.N, self.D = frame.shape           #imOrig.shape          #Dimensões da imagem original
-		self.r, self.c = [8, 8]                        #DIMENSAO DOS BLOCOS
-		
-		#NUMERO DE BLOCOS NA VERTICAL E HORIZONTAL
-		self.nBlkRows = int(np.floor(Madj/self.r))
-		self.nBlkCols = int(np.floor(Nadj/self.c))
-		#GERA TABELA DE QUANTIZAÇÃO
-		self.Z = Z
-		#TRANSFORMA DE RGB PARA YCbCr
-		self.Ymg = self.img #cv2.cvtColor(self.img, cv2.COLOR_BGR2YCR_CB)
-		
-		if self.D == 2:
-			self.NCHNL = 1
-		elif self.D == 3:
-			self.NCHNL = 3
-			
-		self.seqhuff = self._run_()
-								
-	def _run_(self):
-		'''
-		'''
-		
-		hf = h.HuffCoDec(self.hufftables)        #flnm = self.filepath.split('/')[-1:][0].split('.')[0] + '.huff'        #fo = open(flnm,'w')        #fo.write(str(self.Mo) + ',' + str(self.No) + ',' + str(self.Do) + ',' +         #         str(self.qually) + ',' + self.mode + '\n')
-		outseq = []
-		
-#		dYmg = self.Ymg - 128
-		dYmg = self.Ymg - 128
-		r, c, chnl = self.r, self.c, self.NCHNL
-		coefs = np.zeros((r, c, chnl))
-		seqhuff = ''        #nbits = self.NumBits
-		if self.mode == '444':
-			for ch in range(chnl):
-				DCant = 0
-				for i in range(self.nBlkRows):
-					for j in range(self.nBlkCols):
-						sbimg = dYmg[r*i:r*i+r, c*j:c*j+c, ch]     #Subimagens nxn
-				#    TRANSFORMADA - Aplica DCT
-						coefs = cv2.dct(sbimg)
-				#    QUANTIZAÇÃO/LIMIARIZAÇÃO
-						zcoefs = np.round( coefs/self.Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
-				#    CODIFICAÇÃO - Codigos de Huffman
-				#  - FOWARD HUFF
-						seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
-						hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
-						DCant = seq[0]
-						self.NumBits += hfcd[0]
-						seqhuff += hfcd[1]          
-				#Salvar os codigos em arquivo
-				#fo.write(seqhuff+'\n')
-				outseq.append(seqhuff)
-				seqhuff = ''
-				
-		elif self.mode == '420':
-			if chnl == 1:
-				Ymg = dYmg
-			else:
-				Y = dYmg[:,:,0]
-				dims, CrCb = h.adjImg(downsample(dYmg[:,:,1:3], self.mode)[1])
-				Ymg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
-				self.lYmg = Ymg
-			for ch in range(chnl):
-				DCant = 0
-				if ch == 0: #LUMINANCIA
-					rBLK = self.nBlkRows
-					cBLK = self.nBlkCols
-				else:       #CROMINANCIA
-					rBLK, cBLK = int(np.floor(dims[0]/self.r)), int(np.floor(dims[1]/self.c))
-				
-				for i in range(rBLK):
-					for j in range(cBLK):
-						sbimg = Ymg[ch][r*i:r*i+r, c*j:c*j+c]     #Subimagens nxn
-				#    TRANSFORMADA - Aplica DCT
-						coefs = cv2.dct(sbimg)
-				#    QUANTIZAÇÃO/LIMIARIZAÇÃO
-						zcoefs = np.round( coefs/self.Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
-				#    CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
-						seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
-						hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
-						DCant = seq[0]
-						self.NumBits += hfcd[0]
-						seqhuff += hfcd[1]          
+    def __init__(self, frame, qually, hufftables, Z, mode='444'):
+        '''
+        '''
+        
+        #TRATA AS DIMENSOES DA IMAGEM
+        (Madj, Nadj, Dadj), self.img = h.adjImg(np.float32(frame))         #        imOrig = frame  #cv2.imread(filepath,1)        #self.filepath = filepath
+        self.mode = mode
+        self.hufftables = hufftables
+        self.CRate = 0; self.Redunc = 0                #Taxa de compressão e Redundancia
+        self.avgBits = 0; self.NumBits = 0             #Media de bits e numero de bits
+        self.qually = qually                           #Qualidade
+        self.M, self.N, self.D = frame.shape           #imOrig.shape          #Dimensões da imagem original
+        self.r, self.c = [8, 8]                        #DIMENSAO DOS BLOCOS
+        
+        #NUMERO DE BLOCOS NA VERTICAL E HORIZONTAL
+        self.nBlkRows = int(np.floor(Madj/self.r))
+        self.nBlkCols = int(np.floor(Nadj/self.c))
+        #GERA TABELA DE QUANTIZAÇÃO
+        self.Z = Z
+        #TRANSFORMA DE RGB PARA YCbCr
+        self.Ymg = self.img #cv2.cvtColor(self.img, cv2.COLOR_BGR2YCR_CB)
+        
+        if self.D == 2:
+            self.NCHNL = 1
+        elif self.D == 3:
+            self.NCHNL = 3
+            
+        self.seqhuff = self._run_()
+                                
+    def _run_(self):
+        '''
+        '''
+        
+        hf = h.HuffCoDec(self.hufftables)        #flnm = self.filepath.split('/')[-1:][0].split('.')[0] + '.huff'        #fo = open(flnm,'w')        #fo.write(str(self.Mo) + ',' + str(self.No) + ',' + str(self.Do) + ',' +         #         str(self.qually) + ',' + self.mode + '\n')
+        outseq = []
+        
+#        dYmg = self.Ymg - 128
+        dYmg = self.Ymg - 128
+        r, c, chnl = self.r, self.c, self.NCHNL
+        coefs = np.zeros((r, c, chnl))
+        
+        if self.mode == '444':
+            for ch in range(chnl):
+                DCant = 0
+                seqhuff = ''        #nbits = self.NumBits
+                
+                for i in range(self.nBlkRows):
+                    for j in range(self.nBlkCols):
+                        
+                        sbimg = dYmg[r*i:r*i+r, c*j:c*j+c, ch]     #Subimagens nxn
+                #    TRANSFORMADA - Aplica DCT
+                        coefs = cv2.dct(sbimg)
+                #    QUANTIZAÇÃO/LIMIARIZAÇÃO
+                        zcoefs = np.round( coefs/self.Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+                #    CODIFICAÇÃO - Codigos de Huffman
+                #  - FOWARD HUFF
+                        seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
+                        hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
+                        DCant = seq[0]
+                        self.NumBits += hfcd[0]
+                        seqhuff += hfcd[1]     
+                        
+                #Salvar os codigos em arquivo
+                #fo.write(seqhuff+'\n')
+                outseq.append(seqhuff)
+                
+        elif self.mode == '420':
+            if chnl == 1:
+                Ymg = dYmg
+            else:
+                Y = dYmg[:,:,0]
+                dims, CrCb = h.adjImg(downsample(dYmg[:,:,1:3], self.mode)[1])
+                Ymg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
+                self.lYmg = Ymg
+            for ch in range(chnl):
+                DCant = 0
+                if ch == 0: #LUMINANCIA
+                    rBLK = self.nBlkRows
+                    cBLK = self.nBlkCols
+                else:       #CROMINANCIA
+                    rBLK, cBLK = int(np.floor(dims[0]/self.r)), int(np.floor(dims[1]/self.c))
+                
+                for i in range(rBLK):
+                    for j in range(cBLK):
+                        sbimg = Ymg[ch][r*i:r*i+r, c*j:c*j+c]     #Subimagens nxn
+                #    TRANSFORMADA - Aplica DCT
+                        coefs = cv2.dct(sbimg)
+                #    QUANTIZAÇÃO/LIMIARIZAÇÃO
+                        zcoefs = np.round( coefs/self.Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+                #    CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
+                        seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
+                        hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
+                        DCant = seq[0]
+                        self.NumBits += hfcd[0]
+                        seqhuff += hfcd[1]          
                 #Salvar os codigos em arquivo
                 #fo.write(seqhuff + '\n')
-				outseq.append(seqhuff)
-				seqhuff = ''
-				
-		#fo.close()
-		self.avgBits = (float(self.NumBits)/float(self.M*self.N))
-		self.CRate = 24./self.avgBits
-		self.Redunc = 1.-(1./self.CRate)
-		#print '- Encoder Complete...'
-		#return (self.CRate, self.Redunc, self.NumBits)
-		return outseq
-		
-		
-	def Outcomes(self):
-		'''
-		'''
-		
-		print '    :: Taxa de Compressao: %2.3f'%(self.CRate)
-		print '    :: Redundancia de Dados: %2.3f' %(self.Redunc)
-		print '    :: Numero total de bits: ', self.NumBits
-		print '    :: Media de bits/Pixel: %2.3f' %(self.avgBits)
+                outseq.append(seqhuff)
+                seqhuff = ''
+                
+        #fo.close()
+        self.avgBits = (float(self.NumBits)/float(self.M*self.N))
+        self.CRate = 24./self.avgBits
+        self.Redunc = 1.-(1./self.CRate)
+        #print '- Encoder Complete...'
+        #return (self.CRate, self.Redunc, self.NumBits)
+        return outseq
+        
+        
+    def Outcomes(self):
+        '''
+        '''
+        
+        print '    :: Taxa de Compressao: %2.3f'%(self.CRate)
+        print '    :: Redundancia de Dados: %2.3f' %(self.Redunc)
+        print '    :: Numero total de bits: ', self.NumBits
+        print '    :: Media de bits/Pixel: %2.3f' %(self.avgBits)
 #End class Encoder
         
 class Decoder:
@@ -166,6 +169,8 @@ class Decoder:
                 nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
                 for i in range(self.nBlkRows):
                     for j in range(self.nBlkCols):
+#                        print("sec " + str(len(seqrec)))
+#                        print("index " + str(i*self.nBlkCols + j))
                         blk = h.zagzig(seqrec[i*self.nBlkCols + j])
                         self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z[:,:,ch] ))
                         
@@ -207,7 +212,7 @@ class Decoder:
         imrec = self.imRaw+128.0
 #        imrec[imrec>255.0]=255.0
 #        imrec[imrec<0.0]=0.0
-								
+                                
         #print 'Mjpeg Decoder Complete...'
         
         return imrec
