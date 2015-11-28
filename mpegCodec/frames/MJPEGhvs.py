@@ -23,23 +23,12 @@ class Encoder:
         self.qually = qually                           #Qualidade
         self.M, self.N, self.D = frame.shape           #imOrig.shape          #Dimensões da imagem original
         self.r, self.c = [8, 8]                        #DIMENSAO DOS BLOCOS
-        self.mbr, self.mbc = [16, 16]
         
         #NUMERO DE BLOCOS NA VERTICAL E HORIZONTAL
         self.nBlkRows = int(np.floor(self.Madj/self.r))
         self.nBlkCols = int(np.floor(self.Nadj/self.c))
         
-        #NUMERO DE MACROBLOCOS NA VERTICAL E HORIZONTAL
-        self.nMBlkRows = int(np.floor(self.Madj/self.mbr))
-        self.nMBlkCols = int(np.floor(self.Nadj/self.mbc))
-        
-        #NUMERO DE BLOCOS NA VERTICAL E HORIZONTAL EM UM MACROBLOCO
-        self.nBRowsPerMB = int(np.floor(self.mbr/self.r))
-        self.nBColsPerMB = int(np.floor(self.mbc/self.c))
-        
         #GERA TABELA DE QUANTIZAÇÃO
-#        self.hvsqm = Ztab[0]
-#        if self.hvsqm==True:
         self.Zhvs = Ztab[0]
         self.MV = Ztab[1]
         self.sspace = Ztab[2]
@@ -67,98 +56,91 @@ class Encoder:
         dYmg = self.Ymg - 128
         r, c, chnl = self.r, self.c, self.NCHNL
         coefs = np.zeros((r, c, chnl))
+
         
         if self.mode == '444':
             for ch in range(chnl):
                 DCant = 0
-                vec_count = 0
+                
                 seqhuff = ''        #nbits = self.NumBits
                 
-                for a in range(0, self.nMBlkRows*self.mbr, self.mbr):
-                    #ARRAYS PARA ARMAZENAMENTO TEMPORÁRIO DAS SEQUENCIAS DE HUFFMAN
-                    seqshuff_temp = ['','']
-                    for b in range(0, self.nMBlkCols*self.mbc, self.mbc):
+                for i in range(self.nBlkRows):
+                    temp_seq=''
+                    for j in range(self.nBlkCols):
                         
-                        #SELEÇAO DE TABELA
-                        Z = self.Zhvs[ int(abs(self.MV[vec_count][0])) ][ int(abs(self.MV[vec_count][1])) ]
-                        
-                        for i in range(self.nBRowsPerMB):
-                            for j in range(self.nBColsPerMB):
-                                
-                                bR_i = a+r*i;
-                                bC_i = b+c*j;
-                                
-                                sbimg = dYmg[bR_i:bR_i+r, bC_i:bC_i+c, ch]     #Subimagens nxn
-                        #    TRANSFORMADA - Aplica DCT
-                                coefs = cv2.dct(sbimg)
-                        #    QUANTIZAÇÃO/LIMIARIZAÇÃO
-                                zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
-                        #    CODIFICAÇÃO - Codigos de Huffman
-                        #  - FOWARD HUFF
-                                seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
-                                hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
-                                DCant = seq[0]
-                                self.NumBits += hfcd[0]
-                                seqshuff_temp[i] += hfcd[1]
-                                
-                        vec_count =+1
-                    seqhuff += seqshuff_temp[0] + seqshuff_temp[1]
+                        sbimg = dYmg[r*i:r*i+r, c*j:c*j+c, ch]     #Subimagens nxn
+                #    TRANSFORMADA - Aplica DCT
+                        coefs = cv2.dct(sbimg)
+                #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
+                        vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                        Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
+                #    QUANTIZAÇÃO/LIMIARIZAÇÃO
+                        zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+                #    CODIFICAÇÃO - Codigos de Huffman
+                #  - FOWARD HUFF
+                        seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
+                        hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
+                        DCant = seq[0]
+                        self.NumBits += hfcd[0]
+                        temp_seq += hfcd[1]
+                            
+                    seqhuff += temp_seq
                         
                 #Salvar os codigos em arquivo
                 #fo.write(seqhuff+'\n')
                 outseq.append(seqhuff)
                 
-        elif self.mode == '420':
-            if chnl == 1:
-                Ymg = dYmg
-            else:
-                Y = dYmg[:,:,0]
-                dims, CrCb = h.adjImg(downsample(dYmg[:,:,1:3], self.mode)[1])
-                Ymg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
-                self.lYmg = Ymg
-            for ch in range(chnl):
-                vec = 0
-                DCant = 0
-                if ch == 0: #LUMINANCIA
-                    M = self.Madj #self.nBlkRows
-                    N = self.Nadj #self.nBlkCols
-                    m = self.mbr
-                    n = self.mbc
-                else:       #CROMINANCIA
-                    #rBLK, cBLK = int(np.floor(dims[0]/self.mbr)), int(np.floor(dims[1]/self.mbc))
-                    M = int(np.floor(dims[0])) #int(np.floor(dims[0]/self.r)) #
-                    N = int(np.floor(dims[1])) #int(np.floor(dims[1]/self.c)) #
-                    m = self.r
-                    n = self.c
-                
-                for x in range(0, M, m):
-                    for y in range(0, N, n):
-                        #SELEÇAO DE TABELA
-#                        print len(self.MV)
-#                        print x, y, M, N, vec, len(self.MV), int(abs(self.MV[vec][0])), int(abs(self.MV[vec][1]))
-                        Z = self.Zhvs[ int(abs(self.MV[vec][0])) ][ int(abs(self.MV[vec][1])) ]       # DÚVIDA AQUI
-                        vec += 1
-                        
-                        for i in range(x, x+m, self.r):
-                            for j in range(y, y+n, self.c):
-                                sbimg = Ymg[ch][i:i+r, j:j+c]     #Subimagens nxn
-                                #TRANSFORMADA - Aplica DCT
-#                                print sbimg.shape, ch
-                                coefs = cv2.dct(sbimg)
-                                #QUANTIZAÇÃO/LIMIARIZAÇÃO
-#                                print coefs.shape, Z.shape
-                                zcoefs = np.round_( coefs/Z[:,:] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
-                                #CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
-                                seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
-                                hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
-                                DCant = seq[0]
-                                self.NumBits += hfcd[0]
-                                seqhuff += hfcd[1]
-                        
-                #Salvar os codigos em arquivo
-                #fo.write(seqhuff + '\n')
-                outseq.append(seqhuff)
-                seqhuff = ''
+#        elif self.mode == '420':
+#            if chnl == 1:
+#                Ymg = dYmg
+#            else:
+#                Y = dYmg[:,:,0]
+#                dims, CrCb = h.adjImg(downsample(dYmg[:,:,1:3], self.mode)[1])
+#                Ymg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
+#                self.lYmg = Ymg
+#            for ch in range(chnl):
+#                vec = 0
+#                DCant = 0
+#                if ch == 0: #LUMINANCIA
+#                    M = self.Madj #self.nBlkRows
+#                    N = self.Nadj #self.nBlkCols
+#                    m = self.mbr
+#                    n = self.mbc
+#                else:       #CROMINANCIA
+#                    #rBLK, cBLK = int(np.floor(dims[0]/self.mbr)), int(np.floor(dims[1]/self.mbc))
+#                    M = int(np.floor(dims[0])) #int(np.floor(dims[0]/self.r)) #
+#                    N = int(np.floor(dims[1])) #int(np.floor(dims[1]/self.c)) #
+#                    m = self.r
+#                    n = self.c
+#                
+#                for x in range(0, M, m):
+#                    for y in range(0, N, n):
+#                        #SELEÇAO DE TABELA
+##                        print len(self.MV)
+##                        print x, y, M, N, vec, len(self.MV), int(abs(self.MV[vec][0])), int(abs(self.MV[vec][1]))
+#                        Z = self.Zhvs[ int(abs(self.MV[vec][0])) ][ int(abs(self.MV[vec][1])) ]       # DÚVIDA AQUI
+#                        vec += 1
+#                        
+#                        for i in range(x, x+m, self.r):
+#                            for j in range(y, y+n, self.c):
+#                                sbimg = Ymg[ch][i:i+r, j:j+c]     #Subimagens nxn
+#                                #TRANSFORMADA - Aplica DCT
+##                                print sbimg.shape, ch
+#                                coefs = cv2.dct(sbimg)
+#                                #QUANTIZAÇÃO/LIMIARIZAÇÃO
+##                                print coefs.shape, Z.shape
+#                                zcoefs = np.round_( coefs/Z[:,:] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+#                                #CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
+#                                seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
+#                                hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
+#                                DCant = seq[0]
+#                                self.NumBits += hfcd[0]
+#                                seqhuff += hfcd[1]
+#                        
+#                #Salvar os codigos em arquivo
+#                #fo.write(seqhuff + '\n')
+#                outseq.append(seqhuff)
+#                seqhuff = ''
                 
         #fo.close()
         self.avgBits = (float(self.NumBits)/float(self.M*self.N))
@@ -193,7 +175,6 @@ class Decoder:
         (self.M, self.N, self.D), self.imRaw = h.adjImg( np.zeros(self.SHAPE) )
         #NUMERO DE BLOCOS NA VERTICAL E HORIZONTAL
         self.R, self.C = [8,8]
-        self.mbr, self.mbc = [16,16]
         #NUMERO DE BLOCOS NA VERTICAL E HORIZONTAL
         self.nBlkRows = int(np.floor(self.M/self.R))
         self.nBlkCols = int(np.floor(self.N/self.C))
@@ -217,26 +198,25 @@ class Decoder:
         if self.mode == '444':
             for ch in range(chnl):                #hufcd = self.fl.readline()[:-1]            #    print hufcd[0:20]
                 nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
-                vec_count = 0
-                
-                # Quantization table
-                Z = 0
-                if len(self.motionVec[vec_count]) == 2:
-                    Z = self.hvstables[abs(self.motionVec[vec_count][0])][abs(self.motionVec[vec_count][1])]
-                elif len(self.motionVec[vec_count]) == 3:
-                    Z = self.hvstables[abs(self.motionVec[vec_count][1])][abs(self.motionVec[vec_count][2])]
-                else:
-                    Z = self.hvstables[int((abs(self.motionVec[vec_count][1])+abs(self.motionVec[vec_count][3]))/2.)][int((abs(self.motionVec[vec_count][2])+abs(self.motionVec[vec_count][4]))/2.)]
                     
-                for a in range(0,self.nBlkRows,2):
-                    for b in range(0,self.nBlkCols,2):
+                for i in range(self.nBlkRows):
+                    for j in range(self.nBlkCols):
+                
+                        #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
+                        vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                        # Quantization table
+                        Z = 0
+                        if len(self.motionVec[vec_index]) == 2:
+                            Z = self.hvstables[abs(self.motionVec[vec_index][0])][abs(self.motionVec[vec_index][1])]
+                        elif len(self.motionVec[vec_index]) == 3:
+                            Z = self.hvstables[abs(self.motionVec[vec_index][1])][abs(self.motionVec[vec_index][2])]
+                        else:
+                            Z = self.hvstables[int((abs(self.motionVec[vec_index][1])+abs(self.motionVec[vec_index][3]))/2.)][int((abs(self.motionVec[vec_index][2])+abs(self.motionVec[vec_index][4]))/2.)]
+                            
 #                        print("sec " + str(len(seqrec)))
 #                        print("index " + str(i*self.nBlkCols + j))
-                        for i in range(a,a+2):
-                            for j in range(b, b+2):
-                                
-                                blk = h.zagzig(seqrec[i*self.nBlkCols + j])
-                                self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z ))
+                        blk = h.zagzig(seqrec[i*self.nBlkCols + j])
+                        self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z ))
                                     
 #        elif self.mode == '420':
 #            for ch in range (3):

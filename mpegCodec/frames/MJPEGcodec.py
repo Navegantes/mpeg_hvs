@@ -27,6 +27,7 @@ class Encoder:
         #NUMERO DE BLOCOS NA VERTICAL E HORIZONTAL
         self.nBlkRows = int(np.floor(Madj/self.r))
         self.nBlkCols = int(np.floor(Nadj/self.c))
+        
         #GERA TABELA DE QUANTIZAÇÃO
         self.Z = Z
         #TRANSFORMA DE RGB PARA YCbCr
@@ -50,13 +51,16 @@ class Encoder:
         dYmg = self.Ymg - 128
         r, c, chnl = self.r, self.c, self.NCHNL
         coefs = np.zeros((r, c, chnl))
+
         
         if self.mode == '444':
             for ch in range(chnl):
                 DCant = 0
+                
                 seqhuff = ''        #nbits = self.NumBits
                 
                 for i in range(self.nBlkRows):
+                    temp_seq=''
                     for j in range(self.nBlkCols):
                         
                         sbimg = dYmg[r*i:r*i+r, c*j:c*j+c, ch]     #Subimagens nxn
@@ -70,7 +74,8 @@ class Encoder:
                         hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
                         DCant = seq[0]
                         self.NumBits += hfcd[0]
-                        seqhuff += hfcd[1]     
+                        temp_seq += hfcd[1]
+                    seqhuff += temp_seq
                         
                 #Salvar os codigos em arquivo
                 #fo.write(seqhuff+'\n')

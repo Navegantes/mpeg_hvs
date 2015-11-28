@@ -682,14 +682,13 @@ class Decoder:
         sequence.sort(key=lambda tup: tup[0])
         self.input.close()
         print '2) MPEG:'
-        
         for i in range (0,len(sequence)-1,6):
             sequence[i+3][1] = self.precover(sequence[i][1],sequence[i+3][1], sequence[i+3][2], self.sspace)
             sequence[i+1][1] = self.brecover(sequence[i][1], sequence[i+1][1], sequence[i+3][1], sequence[i+1][2], self.sspace)
             sequence[i+2][1] = self.brecover(sequence[i][1], sequence[i+2][1], sequence[i+3][1], sequence[i+2][2], self.sspace)
             sequence[i+4][1] = self.brecover(sequence[i+3][1], sequence[i+4][1], sequence[i+6][1], sequence[i+4][2], self.sspace)
             sequence[i+5][1] = self.brecover(sequence[i+3][1], sequence[i+5][1], sequence[i+6][1], sequence[i+5][2], self.sspace)
-        
+            
         for i in range (self.nframes):
             if i != self.nframes-1:
                 sequence[i][1][sequence[i][1]>255.0] = 255.0
@@ -703,8 +702,8 @@ class Decoder:
                 cv2.imshow('Video', cv2.cvtColor(np.uint8(sequence[-1][1]), cv2.COLOR_YCR_CB2BGR))
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
-#            cv2.waitKey(0)
-#            cv2.destroyAllWindows()
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
             
     def acdctables(self):
         '''
