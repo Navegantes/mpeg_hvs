@@ -82,6 +82,7 @@ class Encoder:
                 outseq.append(seqhuff)
                 
         elif self.mode == '420':
+            
             if chnl == 1:
                 Ymg = dYmg
             else:
@@ -91,6 +92,9 @@ class Encoder:
                 self.lYmg = Ymg
             for ch in range(chnl):
                 DCant = 0
+                
+                seqhuff = ''        #nbits = self.NumBits
+                
                 if ch == 0: #LUMINANCIA
                     rBLK = self.nBlkRows
                     cBLK = self.nBlkCols
@@ -113,7 +117,6 @@ class Encoder:
                 #Salvar os codigos em arquivo
                 #fo.write(seqhuff + '\n')
                 outseq.append(seqhuff)
-                seqhuff = ''
                 
         #fo.close()
         self.avgBits = (float(self.NumBits)/float(self.M*self.N))
