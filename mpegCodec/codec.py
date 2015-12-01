@@ -689,21 +689,13 @@ class Decoder:
             sequence[i+4][1] = self.brecover(sequence[i+3][1], sequence[i+4][1], sequence[i+6][1], sequence[i+4][2], self.sspace)
             sequence[i+5][1] = self.brecover(sequence[i+3][1], sequence[i+5][1], sequence[i+6][1], sequence[i+5][2], self.sspace)
             
+        output = []
         for i in range (self.nframes):
-            if i != self.nframes-1:
-                sequence[i][1][sequence[i][1]>255.0] = 255.0
-                sequence[i][1][sequence[i][1]<0.0] = 0.0
-                cv2.imshow('Video', cv2.cvtColor(np.uint8(sequence[i][1]), cv2.COLOR_YCR_CB2BGR))
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-            else:
-                sequence[-1][1][sequence[-1][1]>255.0] = 255.0
-                sequence[-1][1][sequence[-1][1]<0.0] = 0.0
-                cv2.imshow('Video', cv2.cvtColor(np.uint8(sequence[-1][1]), cv2.COLOR_YCR_CB2BGR))
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            sequence[i][1][sequence[i][1]>255.0] = 255.0
+            sequence[i][1][sequence[i][1]<0.0] = 0.0
+            output.append(cv2.cvtColor(np.uint8(sequence[i][1]), cv2.COLOR_YCR_CB2BGR))
+        
+        return output
             
     def acdctables(self):
         '''

@@ -6,6 +6,7 @@ Created on Mon May 25 16:04:07 2015
 """
 
 from mpegCodec import codec
+from mpegCodec.utils import frame_utils as futils
 
 from Tkinter import Tk
 from tkFileDialog import askopenfilename
@@ -21,7 +22,8 @@ root.withdraw()
 #mpeg.run()
 
 ### DECODER ###
-vdName = askopenfilename().__str__()
-print("\nFile: " + vdName)
-mpeg = codec.Decoder(vdName)
-mpeg.run() 
+fileName = askopenfilename(parent=root, title="Enter with a video file.").__str__()
+print("\nFile: " + fileName)
+mpeg = codec.Decoder(fileName)
+seq = mpeg.run()
+futils.write_sequence_frames(seq, fileName)
