@@ -27,7 +27,7 @@ print name
 name = name.split('.')[-1]
 print name
 if name == 'mp4' or name == 'MP4' or name == 'avi' or name == 'AVI':
-    mpeg = codec.Encoder(fileName, quality = 75, sspace = 16, mode = '420', search = 1, hvsqm = 0, flat = 10.0, p = 2.0)
+    mpeg = codec.Encoder(fileName, quality = 50, sspace = 16, mode = '420', search = 1, hvsqm = 0, flat = 10.0, p = 2.0)
     mpeg.run()
 elif name == 'txt' or name == 'TXT':
     mpeg = codec.Decoder(fileName)

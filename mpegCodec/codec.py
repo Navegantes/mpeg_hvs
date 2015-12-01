@@ -36,9 +36,16 @@ class Encoder:
         self.fps = 0
         self.video = self.readVideo(videoName)
         if self.hvsqm == 0:
-            self.output = open('./outputs/'+videoName.split('/')[-1].split('.')[0] + '.txt', 'w')
+            if mode == '444':
+                self.output = open('./outputs/normal/444/'+videoName.split('/')[-1].split('.')[0] + '.txt', 'w')
+            else:
+                self.output = open('./outputs/normal/420/'+videoName.split('/')[-1].split('.')[0] + '.txt', 'w')
+																
         else:
-            self.output = open('./outputs/'+videoName.split('/')[-1].split('.')[0] + '_hvs' + '.txt', 'w')
+            if mode == '444':
+                self.output = open('./outputs/hvs/444/'+videoName.split('/')[-1].split('.')[0] + '_hvs' + '.txt', 'w')
+            else:
+                self.output = open('./outputs/hvs/420/'+videoName.split('/')[-1].split('.')[0] + '_hvs' + '.txt', 'w')
         self.sspace = sspace
         self.search = search
         self.quality = quality
