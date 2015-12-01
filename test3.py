@@ -30,4 +30,4 @@ while ret:
         sequence.append(fr)
 video.release()
     
-futils.write_sequence_frames(sequence, vdName)
+futils.write_sequence_frames(sequence)

@@ -8,6 +8,9 @@ Created on Mon Nov 30 14:41:38 2015
 import cv2
 import os
 
+from Tkinter import Tk
+from tkSimpleDialog import askstring
+
 def sequence_iterator(sequence):
     
     nFrames = len(sequence)
@@ -23,17 +26,26 @@ def sequence_iterator(sequence):
     cv2.destroyAllWindows()
     
     
-def write_sequence_frames(sequence, video_name):
+def write_sequence_frames(sequence, video_name = ''):
+    
+    root = Tk()
+    root.withdraw()
     
     nFrames = len(sequence)
     wName = 'Video'
     cv2.namedWindow(wName)
     
-    splited = video_name.split('/')
-    str_len = len(splited)
-    splited = splited[str_len-1]
-    splited = splited.split('.')[0]
-    directory = './frames_output/' + splited + '/'
+    dirName = ''
+    if video_name == '':
+        dirName = askstring("Directory Name", "Enter with the directory output name").__str__()
+    else:
+        dirName = video_name.split('/')
+        str_len = len(dirName)
+        dirName = dirName[str_len-1]
+        dirName = dirName.split('.')[0]
+        
+    dirName = ''.join(e for e in dirName if e.isalnum())
+    directory = './frames_output/' + dirName + '/'
     extension = '.png'
     
     if not os.path.exists(directory):

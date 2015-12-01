@@ -90,57 +90,49 @@ class Encoder:
                 #fo.write(seqhuff+'\n')
                 outseq.append(seqhuff)
                 
-#        elif self.mode == '420':
-#            if chnl == 1:
-#                Ymg = dYmg
-#            else:
-#                Y = dYmg[:,:,0]
-#                dims, CrCb = h.adjImg(downsample(dYmg[:,:,1:3], self.mode)[1])
-#                Ymg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
-#                self.lYmg = Ymg
-#            for ch in range(chnl):
-#                vec = 0
-#                DCant = 0
-#                if ch == 0: #LUMINANCIA
-#                    M = self.Madj #self.nBlkRows
-#                    N = self.Nadj #self.nBlkCols
-#                    m = self.mbr
-#                    n = self.mbc
-#                else:       #CROMINANCIA
-#                    #rBLK, cBLK = int(np.floor(dims[0]/self.mbr)), int(np.floor(dims[1]/self.mbc))
-#                    M = int(np.floor(dims[0])) #int(np.floor(dims[0]/self.r)) #
-#                    N = int(np.floor(dims[1])) #int(np.floor(dims[1]/self.c)) #
-#                    m = self.r
-#                    n = self.c
-#                
-#                for x in range(0, M, m):
-#                    for y in range(0, N, n):
-#                        #SELEÇAO DE TABELA
-##                        print len(self.MV)
-##                        print x, y, M, N, vec, len(self.MV), int(abs(self.MV[vec][0])), int(abs(self.MV[vec][1]))
-#                        Z = self.Zhvs[ int(abs(self.MV[vec][0])) ][ int(abs(self.MV[vec][1])) ]       # DÚVIDA AQUI
-#                        vec += 1
-#                        
-#                        for i in range(x, x+m, self.r):
-#                            for j in range(y, y+n, self.c):
-#                                sbimg = Ymg[ch][i:i+r, j:j+c]     #Subimagens nxn
-#                                #TRANSFORMADA - Aplica DCT
-##                                print sbimg.shape, ch
-#                                coefs = cv2.dct(sbimg)
-#                                #QUANTIZAÇÃO/LIMIARIZAÇÃO
-##                                print coefs.shape, Z.shape
-#                                zcoefs = np.round_( coefs/Z[:,:] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
-#                                #CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
-#                                seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
-#                                hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
-#                                DCant = seq[0]
-#                                self.NumBits += hfcd[0]
-#                                seqhuff += hfcd[1]
-#                        
-#                #Salvar os codigos em arquivo
-#                #fo.write(seqhuff + '\n')
-#                outseq.append(seqhuff)
-#                seqhuff = ''
+        elif self.mode == '420':
+            
+            if chnl == 1:
+                Ymg = dYmg
+            else:
+                Y = dYmg[:,:,0]
+                dims, CrCb = h.adjImg(downsample(dYmg[:,:,1:3], self.mode)[1])
+                Ymg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
+                self.lYmg = Ymg
+            for ch in range(chnl):
+                DCant = 0
+                
+                seqhuff = ''        #nbits = self.NumBits
+                
+                if ch == 0: #LUMINANCIA
+                    rBLK = self.nBlkRows
+                    cBLK = self.nBlkCols
+                else:       #CROMINANCIA
+                    rBLK, cBLK = int(np.floor(dims[0]/self.r)), int(np.floor(dims[1]/self.c))
+                
+                for i in range(rBLK):
+                    for j in range(cBLK):
+                        sbimg = Ymg[ch][r*i:r*i+r, c*j:c*j+c]     #Subimagens nxn
+                #    TRANSFORMADA - Aplica DCT
+                        coefs = cv2.dct(sbimg)
+                #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
+                        vec_index = 0
+                        if ch == 0: #LUMINANCIA
+                            vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                        else:       #CROMINANCIA
+                            vec_index = int(i*np.floor(self.nBlkCols/2)+j)
+                        Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
+                #    QUANTIZAÇÃO/LIMIARIZAÇÃO
+                        zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+                #    CODIFICAÇÃO - Codigos de Huffman - FOWARD HUFF
+                        seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
+                        hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
+                        DCant = seq[0]
+                        self.NumBits += hfcd[0]
+                        seqhuff += hfcd[1]          
+                #Salvar os codigos em arquivo
+                #fo.write(seqhuff + '\n')
+                outseq.append(seqhuff)
                 
         #fo.close()
         self.avgBits = (float(self.NumBits)/float(self.M*self.N))
@@ -217,49 +209,54 @@ class Decoder:
 #                        print("index " + str(i*self.nBlkCols + j))
                         blk = h.zagzig(seqrec[i*self.nBlkCols + j])
                         self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z ))
-                                    
-#        elif self.mode == '420':
-#            for ch in range (3):
-#                if ch == 0:
-#                    nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
-#                    rBLK = self.nBlkRows
-#                    cBLK = self.nBlkCols
-#                    count = 0                                            
-#                    for x in range (0, self.M, self.mbr):
-#                        for y in range (0, self.N, self.mbc):
-#                            for a in range (x, x+self.mbr, self.R):
-#                                for b in range (y, y+self.mbc, self.C):
-#                                    img[a:a+self.R, b:b+self.C, ch] = h.zagzig(seqrec[(a/8)*cBLK + (b/8)])        # NÃO ENTENDI!!!!!
-#                                    
-#                    for x in range (0, self.M, self.mbr):
-#                        for y in range (0, self.N, self.mbc):
-#                            # Quantization table
-#                            if len(self.motionVec[count]) == 2:
-#                                Z = self.hvstables[abs(self.motionVec[count][0])][abs(self.motionVec[count][1])]
-#                            elif len(self.motionVec[count]) == 3:
-#                                Z = self.hvstables[abs(self.motionVec[count][1])][abs(self.motionVec[count][2])]
-#                            else:
-#                                Z = self.hvstables[int((abs(self.motionVec[count][1])+abs(self.motionVec[count][3]))/2.)][int((abs(self.motionVec[count][2])+abs(self.motionVec[count][4]))/2.)]
-#                            for i in range (x, x+self.mbr, self.R):
-#                                for j in range (y, y+self.mbc, self.C):
-#                                    img[i:i+self.R, j:j+self.C, ch] = np.round_(cv2.idct( img[i:i+self.R, j:j+self.C, ch]*Z[:,:] ))
-#                            count += 1
-#                else:
-#                    nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
-#                    rBLK = int(np.floor(self.M/self.mbr))
-#                    cBLK = int(np.floor(self.M/self.mbc))                                                                                
-#                    count = 0
-#                    for x in range (rBLK):
-#                        for y in range (cBLK):
-#                            # Quantization table
-#                            if len(self.motionVec[count]) == 2:
-#                                Z = self.hvstables[abs(self.motionVec[count][0])][abs(self.motionVec[count][1])]
-#                            elif len(self.motionVec[count]) == 3:
-#                                Z = self.hvstables[abs(self.motionVec[count][1])][abs(self.motionVec[count][2])]
-#                            else:
-#                                Z = self.hvstables[int(np.floor((abs(self.motionVec[count][1])+abs(self.motionVec[count][3]))/2.))][int(np.floor((abs(self.motionVec[count][2])+abs(self.motionVec[count][4]))/2.))]                                        
-#                            img[x:x+self.mbr, y:y+self.mbc, ch] = upsample(np.round_(cv2.idct(h.zagzig(seqrec[x*cBLK + y])*Z[:,:])), self.mode, 2)
-#                            count += 1
+                        
+        elif self.mode == '420':
+            #import math as m
+            if chnl == 1:
+                rYmg = self.imRaw
+            else:                #Y = self.imRaw[:,:,0]
+                Y = np.zeros( (self.M, self.N) )
+                dims, CrCb = h.adjImg( downsample(np.zeros( (self.M, self.N, 2) ), self.mode)[1] )
+                rYmg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
+                
+            for ch in range(chnl):
+                #hufcd = self.fl.readline()[:-1]
+                if ch == 0:
+                    rBLK = self.nBlkRows
+                    cBLK = self.nBlkCols
+                else:
+                    rBLK, cBLK = int(np.floor(dims[0]/self.R)), int(np.floor(dims[1]/self.C))
+            #    print hufcd[0:20]
+                nblk, self.seqrec = hf.invhuff(self.huffcodes[ch], ch)
+                for i in range(rBLK):
+                    for j in range(cBLK):
+                        
+                
+                        #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
+                        vec_index = 0
+                        if ch == 0: #LUMINANCIA
+                            vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                        else:       #CROMINANCIA
+                            vec_index = int(i*np.floor(self.nBlkCols/2)+j)
+                        # Quantization table
+                        Z = 0
+                        if len(self.motionVec[vec_index]) == 2:
+                            Z = self.hvstables[abs(self.motionVec[vec_index][0])][abs(self.motionVec[vec_index][1])]
+                        elif len(self.motionVec[vec_index]) == 3:
+                            Z = self.hvstables[abs(self.motionVec[vec_index][1])][abs(self.motionVec[vec_index][2])]
+                        else:
+                            Z = self.hvstables[int((abs(self.motionVec[vec_index][1])+abs(self.motionVec[vec_index][3]))/2.)][int((abs(self.motionVec[vec_index][2])+abs(self.motionVec[vec_index][4]))/2.)]
+                            
+                        blk = h.zagzig(self.seqrec[i*cBLK + j])
+                        #print rYmg[ch][r*i:r*i+r, c*j:c*j+c].shape, ch, i, j
+                        rYmg[ch][r*i:r*i+r, c*j:c*j+c] = np.round_( cv2.idct( blk*Z ))
+            # UPSAMPLE
+            if chnl == 1:
+                self.imRaw = rYmg #[:self.Mo, : self.No]
+            else:
+                self.imRaw[:,:,0] = rYmg[0]
+                self.imRaw[:,:,1] = upsample(rYmg[1], self.mode)[:self.M, :self.N]
+                self.imRaw[:,:,2] = upsample(rYmg[2], self.mode)[:self.M, :self.N]
         
         #self.fl.close()
         
@@ -272,9 +269,7 @@ class Decoder:
         #print 'Mjpeg Decoder Complete...'
         
         return imrec
-        ################################### FIM CÓDIGO VELHO ###################################
         
-
 def downsample(mat, mode):
     '''
     '''
@@ -295,27 +290,22 @@ def downsample(mat, mode):
     #dims, newmat = h.adjImg(newmat)
     return ndims, newmat
     #return h.adjImg(newmat)
-
-def upsample(mat, mode, uptype):
+    
+def upsample(mat, mode):
     '''
     '''
     
     M, N = mat.shape
+    newmat = np.zeros((M*2, N*2))
     
-    if uptype == 1:
-        newmat = np.zeros((M*2, N*2))
-        if mode == '420':
-            newmat[::2, ::2] = mat
-        elif mode == '422':
-            pass
-    elif uptype == 2:
-        newmat = np.zeros((2*M, 2*N))
-        if mode == '420':
-            newmat[::2, ::2] = mat
-            newmat[::2, 1::2] = newmat[::2,::2]
-            newmat[1::2, :] = newmat[::2, :]
-        elif mode == '422':
-            pass
+    if mode == '420':
+        newmat[::2, ::2] = mat
+        newmat[::2, 1::2] = mat
+        newmat[1::2, :] = newmat[::2, :]
+#        newmat[1::2, ::2] = mat
+#        newmat[1::2, 1::2] = mat
+    elif mode == '422':
+        pass
     
     return newmat
     
