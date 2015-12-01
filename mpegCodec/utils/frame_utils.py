@@ -45,6 +45,8 @@ def write_sequence_frames(sequence, video_name = ''):
         dirName = dirName.split('.')[0]
         
     dirName = ''.join(e for e in dirName if e.isalnum())
+    if not os.path.exists('./frames_output/'):
+        os.makedirs('./frames_output/')
     directory = './frames_output/' + dirName + '/'
     extension = '.png'
     
