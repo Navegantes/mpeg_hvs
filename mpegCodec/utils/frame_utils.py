@@ -26,7 +26,7 @@ def sequence_iterator(sequence):
     cv2.destroyAllWindows()
     
     
-def write_sequence_frames(sequence, video_name = ''):
+def write_sequence_frames(sequence, mode, hvsqm, video_name = ''):
     
     root = Tk()
     root.withdraw()
@@ -40,14 +40,31 @@ def write_sequence_frames(sequence, video_name = ''):
         dirName = askstring("Directory Name", "Enter with the directory output name").__str__()
     else:
         dirName = video_name.split('/')
-        str_len = len(dirName)
-        dirName = dirName[str_len-1]
+        dirName = dirName[-1]
         dirName = dirName.split('.')[0]
+        hvs = dirName.split('_')[-1]
         
-    dirName = ''.join(e for e in dirName if e.isalnum())
+#    dirName = ''.join(e for e in dirName if e.isalnum())
     if not os.path.exists('./frames_output/'):
         os.makedirs('./frames_output/')
-    directory = './frames_output/' + dirName + '/'
+    if hvs == 'hvs':
+        if mode == '444':
+            directory = './frames_output/hvs/444/' + dirName + '/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+        elif mode == '420':
+            directory = './frames_output/hvs/420/' + dirName + '/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+    else:
+        if mode == '444':
+            directory = './frames_output/normal/444/' + dirName + '/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+        elif mode == '420':
+            directory = './frames_output/normal/420/' + dirName + '/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
     extension = '.png'
     
     if not os.path.exists(directory):

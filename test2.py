@@ -32,6 +32,6 @@ if name == 'mp4' or name == 'MP4' or name == 'avi' or name == 'AVI':
 elif name == 'txt' or name == 'TXT':
     mpeg = codec.Decoder(fileName)
     seq = mpeg.run()
-    futils.write_sequence_frames(seq, fileName)
+    futils.write_sequence_frames(seq, mpeg.mode, mpeg.hvsqm, fileName)
 else:
     print('Invalid filename!!!!')

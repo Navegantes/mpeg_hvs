@@ -11,6 +11,7 @@ from frames import MJPEGcodec as jpeg
 from frames import MJPEGhvs as jpeghvs
 from math import sqrt, log, exp
 from utils import detect_version as dtv
+import os
 
 class Encoder:
     def __init__(self, videoName, quality = 75, sspace = 16, mode = '420', search = 0, hvsqm = 0, flat = 10.0, p = 2.0):
@@ -37,14 +38,26 @@ class Encoder:
         self.video = self.readVideo(videoName)
         if self.hvsqm == 0:
             if mode == '444':
+                directory = './outputs/normal/444/'
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
                 self.output = open('./outputs/normal/444/'+videoName.split('/')[-1].split('.')[0] + '.txt', 'w')
             else:
+                directory = './outputs/normal/420/'
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
                 self.output = open('./outputs/normal/420/'+videoName.split('/')[-1].split('.')[0] + '.txt', 'w')
 																
         else:
             if mode == '444':
+                directory = './outputs/hvs/444/'
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
                 self.output = open('./outputs/hvs/444/'+videoName.split('/')[-1].split('.')[0] + '_hvs' + '.txt', 'w')
             else:
+                directory = './outputs/hvs/420/'
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
                 self.output = open('./outputs/hvs/420/'+videoName.split('/')[-1].split('.')[0] + '_hvs' + '.txt', 'w')
         self.sspace = sspace
         self.search = search
