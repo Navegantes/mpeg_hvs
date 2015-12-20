@@ -72,7 +72,7 @@ class Encoder:
                 #    TRANSFORMADA - Aplica DCT
                         coefs = cv2.dct(sbimg)
                 #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
-                        vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                        vec_index = int(np.floor(i/2)*self.c+np.floor(j/2))
                         Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
                 #    QUANTIZAÇÃO/LIMIARIZAÇÃO
                         zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
@@ -118,9 +118,9 @@ class Encoder:
                 #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
                         vec_index = 0
                         if ch == 0: #LUMINANCIA
-                            vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                            vec_index = int(np.floor(i/2)*self.c+np.floor(j/2))
                         else:       #CROMINANCIA
-                            vec_index = int(i*np.floor(self.nBlkCols/2)+j)
+                            vec_index = int(i+j)
                         Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
                 #    QUANTIZAÇÃO/LIMIARIZAÇÃO
                         zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
@@ -195,7 +195,7 @@ class Decoder:
                     for j in range(self.nBlkCols):
                 
                         #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
-                        vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                        vec_index = int(np.floor(i/2)*self.C+np.floor(j/2))
                         # Quantization table
                         Z = 0
                         if len(self.motionVec[vec_index]) == 2:
@@ -235,9 +235,9 @@ class Decoder:
                         #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
                         vec_index = 0
                         if ch == 0: #LUMINANCIA
-                            vec_index = int(np.floor(i/2)*np.floor(self.nBlkCols/2)+np.floor(j/2))
+                            vec_index = int(np.floor(i/2)*self.C+np.floor(j/2))
                         else:       #CROMINANCIA
-                            vec_index = int(i*np.floor(self.nBlkCols/2)+j)
+                            vec_index = int(i+j)
                         # Quantization table
                         Z = 0
                         if len(self.motionVec[vec_index]) == 2:

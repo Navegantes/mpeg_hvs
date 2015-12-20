@@ -137,15 +137,15 @@ class Encoder:
                 v = sqrt(vh**2+vt**2)
                 qhvs = np.zeros((8,8), np.float32)
                 g = np.zeros((8,8), np.float32)
-                const1 = (mh*self.oR)/(self.mbr*self.mbc)
-                const2 = (mt*self.oC)/(self.mbr*self.mbc)
+                const1 = float(mh*self.oR)/float(self.mbr*self.mbc)
+                const2 = float(mt*self.oC)/float(self.mbr*self.mbc)
                 if v != 0:
                     for i in range (8):
                         for j in range (8):
                             ai = const1*0.5*i
                             aj = const2*0.5*j
                             aij = ai + aj
-                            g[i,j] = (6.1+7.3*abs(log(v/3.0))**3.0)*(v*aij**2.0)*exp(-2.0*aij*(v+2.0)/45.9)
+                            g[i,j] = (6.1+7.3*abs(log(v/3.0))**3.0)*(v*(aij**2.0))*exp(-2.0*aij*(v+2.0)/45.9)
                 
                     gmax = np.max(g)
                     for i in range (8):
@@ -155,7 +155,7 @@ class Encoder:
                             elif gmax==g[i,j]:
                                 qhvs[i,j] = 0.0
                             else:
-                                qhvs[i,j] = (mh+mt)/float(self.p)*(1.-(g[i,j]/gmax))
+                                qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
                 else:
                     pass
 
@@ -507,15 +507,15 @@ class Decoder:
                 v = sqrt(vh**2+vt**2)
                 qhvs = np.zeros((8,8), np.float32)
                 g = np.zeros((8,8), np.float32)
-                const1 = (mh*int(self.shape[0]))/(int(self.mbr)*int(self.mbc))
-                const2 = (mt*int(self.shape[1]))/(int(self.mbr)*int(self.mbc))
+                const1 = float(mh*int(self.shape[0]))/float(int(self.mbr)*int(self.mbc))
+                const2 = float(mt*int(self.shape[1]))/float(int(self.mbr)*int(self.mbc))
                 if v != 0:
                     for i in range (8):
                         for j in range (8):
                             ai = const1*0.5*i
                             aj = const2*0.5*j
                             aij = ai + aj
-                            g[i,j] = (6.1+7.3*abs(log(v/3.0))**3.0)*(v*aij**2.0)*exp(-2.0*aij*(v+2.0)/45.9)
+                            g[i,j] = (6.1+7.3*abs(log(v/3.0))**3.0)*(v*(aij**2.0))*exp(-2.0*aij*(v+2.0)/45.9)
                 
                     gmax = np.max(g)
                     for i in range (8):
@@ -525,7 +525,7 @@ class Decoder:
                             elif gmax==g[i,j]:
                                 qhvs[i,j] = 0.0
                             else:
-                                qhvs[i,j] = (mh+mt)/float(self.p)*(1.-(g[i,j]/gmax))
+                                qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
                 else:
                     pass                        
 
