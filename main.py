@@ -25,7 +25,7 @@ name = fileName.split('/')
 name = name[-1]
 name = name.split('.')[-1]
 
-quality = 50	# Compression quality.
+quality = 75	# Compression quality.
 sspace = 32	# Search space.
 search = 1		# 0 - Full search; 1 - Parallel hierarchical.
 flat = 10.0	# Qflat value.
