@@ -57,7 +57,7 @@ class Encoder:
         r, c, chnl = self.r, self.c, self.NCHNL
         coefs = np.zeros((r, c, chnl))
         
-        Z = genQntb(50)
+#        Z = genQntb(50)
 
         
         if self.mode == '444':
@@ -74,13 +74,10 @@ class Encoder:
                 #    TRANSFORMADA - Aplica DCT
                         coefs = cv2.dct(sbimg)
                 #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
-#                        vec_index = int(np.floor(i/2)*self.c+np.floor(j/2))
-#                        Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
+                        vec_index = int(np.floor(i/2)*self.c+np.floor(j/2))
+                        Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
                 #    QUANTIZAÇÃO/LIMIARIZAÇÃO
-                        print np.size(coefs)
-                        print np.size(Z)
-                        print np.size(ch)
-                        zcoefs = np.round( coefs/Z[:,:,ch] )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
+                        zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
                 #    CODIFICAÇÃO - Codigos de Huffman
                 #  - FOWARD HUFF
                         seq = h.zigzag(zcoefs)                     #Gera Sequencia de coeficientes 1-D
@@ -196,26 +193,26 @@ class Decoder:
             for ch in range(chnl):                #hufcd = self.fl.readline()[:-1]            #    print hufcd[0:20]
                 nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
                 
-                Z = genQntb(50)
+#                Z = genQntb(50)
                     
                 for i in range(self.nBlkRows):
                     for j in range(self.nBlkCols):
                 
                         #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
-#                        vec_index = int(np.floor(i/2)*self.C+np.floor(j/2))
-#                        # Quantization table
-#                        Z = 0
-#                        if len(self.motionVec[vec_index]) == 2:
-#                            Z = self.hvstables[abs(self.motionVec[vec_index][0])][abs(self.motionVec[vec_index][1])]
-#                        elif len(self.motionVec[vec_index]) == 3:
-#                            Z = self.hvstables[abs(self.motionVec[vec_index][1])][abs(self.motionVec[vec_index][2])]
-#                        else:
-#                            Z = self.hvstables[int((abs(self.motionVec[vec_index][1])+abs(self.motionVec[vec_index][3]))/2.)][int((abs(self.motionVec[vec_index][2])+abs(self.motionVec[vec_index][4]))/2.)]
+                        vec_index = int(np.floor(i/2)*self.C+np.floor(j/2))
+                        # Quantization table
+                        Z = 0
+                        if len(self.motionVec[vec_index]) == 2:
+                            Z = self.hvstables[abs(self.motionVec[vec_index][0])][abs(self.motionVec[vec_index][1])]
+                        elif len(self.motionVec[vec_index]) == 3:
+                            Z = self.hvstables[abs(self.motionVec[vec_index][1])][abs(self.motionVec[vec_index][2])]
+                        else:
+                            Z = self.hvstables[int((abs(self.motionVec[vec_index][1])+abs(self.motionVec[vec_index][2]))/2.)][int((abs(self.motionVec[vec_index][3])+abs(self.motionVec[vec_index][4]))/2.)]
 #                            
 #                        print("sec " + str(len(seqrec)))
 #                        print("index " + str(i*self.nBlkCols + j))
                         blk = h.zagzig(seqrec[i*self.nBlkCols + j])
-                        self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z ))
+                        self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z))
                         
         elif self.mode == '420':
             #import math as m

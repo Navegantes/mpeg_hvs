@@ -211,7 +211,7 @@ class Encoder:
                     if bframe.motionVec[j][1] == 'i':
                         self.output.write(':'+str(bframe.motionVec[j][1])+','+str(bframe.motionVec[j][2])+','+str(bframe.motionVec[j][3])+','+str(bframe.motionVec[j][4])+','+str(bframe.motionVec[j][5]))
                         if self.hvsqm == 1:
-                            MV[j] = ( int(np.floor((abs(bframe.motionVec[j][2])+abs(bframe.motionVec[j][4]))/2.)) , int(np.floor((abs(bframe.motionVec[j][3])+abs(bframe.motionVec[j][5]))/2.) ))
+                            MV[j] = ( int(np.floor((abs(bframe.motionVec[j][2])+abs(bframe.motionVec[j][3]))/2.)) , int(np.floor((abs(bframe.motionVec[j][4])+abs(bframe.motionVec[j][5]))/2.) ))
                     else:
                         self.output.write(':'+str(bframe.motionVec[j][1])+','+str(bframe.motionVec[j][2])+','+str(bframe.motionVec[j][3]))
                         if self.hvsqm == 1:

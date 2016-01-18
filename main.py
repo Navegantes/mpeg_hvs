@@ -47,7 +47,7 @@ if name == 'mp4' or name == 'MP4' or name == 'mpg'or name == 'avi' or name == 'A
 				seq = mpeg.run()
 				futils.write_sequence_frames(seq, mpeg.mode, mpeg.hvsqm, filetxt)
 	else:
-		mpeg = codec.Encoder(fileName, quality = 50, sspace = 16, mode = '444', search = 1, hvsqm = 0, flat = 10.0, p = 2.0)
+		mpeg = codec.Encoder(fileName, quality = 50, sspace = 16, mode = '444', search = 1, hvsqm = 1, flat = 10.0, p = 2.0)
 		mpeg.run()
 				
 elif name == 'txt' or name == 'TXT':
