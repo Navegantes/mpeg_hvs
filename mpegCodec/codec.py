@@ -128,6 +128,7 @@ class Encoder:
         
     def genHVStables (self):
         tables = [[0 for x in range (self.sspace+1)] for x in range (self.sspace+1)]
+#        print "Old shape of HVS tables: " + str(np.shape(tables)) + "\nTables:\n" + str(tables) + "\n"
         qflat = self.flat*np.ones((8,8), np.float32)
         for mh in range (self.sspace+1):
             for mt in range (self.sspace+1):
@@ -135,6 +136,9 @@ class Encoder:
                 vh = float(mh*self.fps)/float(self.oR)
                 vt = float(mt*self.fps)/float(self.oC)
                 v = sqrt(vh**2+vt**2)
+#                print "MV: " + str(mh) + ", " + str(mt)
+#                print "Velocity: " + str(vh) + ", " + str(vt)
+#                print "V: " + str(v)
                 qhvs = np.zeros((8,8), np.float32)
                 g = np.zeros((8,8), np.float32)
                 const1 = float(mh*self.oR)/float(self.mbr*self.mbc)
@@ -149,17 +153,13 @@ class Encoder:
                 
                     gmax = np.max(g)
                     for i in range (8):
-                        for j in range (8):
-                            if gmax == 0.0:
-                                qhvs[i,j] = 0.0
-                            elif gmax==g[i,j]:
-                                qhvs[i,j] = 0.0
-                            else:
-                                qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
+                        qhvs[i,j] = ((mh+mt)/float(self.p))*(1.-(g[i,j]/gmax))
                 else:
                     pass
 
                 tables[mh][mt] = qflat + qhvs
+        
+#        print "Shape of HVS tables: " + str(np.shape(tables)) + "\nTables:\n" + str(tables) + "\n"
                 
         self.hvstables = tables
                         
