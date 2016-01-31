@@ -63,7 +63,7 @@ class Encoder:
                 DCant = 0
                 
                 seqhuff = ''        #nbits = self.NumBits
-                
+                a, b = [0, 0]                
                 for i in range(self.nBlkRows):
                     temp_seq=''
                     for j in range(self.nBlkCols):
@@ -72,7 +72,7 @@ class Encoder:
                 #    TRANSFORMADA - Aplica DCT
                         coefs = cv2.dct(sbimg)
                 #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
-                        vec_index = int(np.floor(i/2)*self.c+np.floor(j/2))
+                        vec_index = int(a*(self.nBlkCols/2)+b)
                         Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
                 #    QUANTIZAÇÃO/LIMIARIZAÇÃO
                         zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
@@ -83,7 +83,13 @@ class Encoder:
                         DCant = seq[0]
                         self.NumBits += hfcd[0]
                         temp_seq += hfcd[1]
-                            
+                        if j%2 != 0:
+                            b += 1
+                    if i%2 != 0:																												
+                        a += 1
+                        b = 0
+                    else:
+                        b = 0
                     seqhuff += temp_seq
                         
                 #Salvar os codigos em arquivo
@@ -103,7 +109,7 @@ class Encoder:
                 DCant = 0
                 
                 seqhuff = ''        #nbits = self.NumBits
-                
+                a , b = [0, 0]
                 if ch == 0: #LUMINANCIA
                     rBLK = self.nBlkRows
                     cBLK = self.nBlkCols
@@ -118,9 +124,9 @@ class Encoder:
                 #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
                         vec_index = 0
                         if ch == 0: #LUMINANCIA
-                            vec_index = int(np.floor(i/2)*self.c+np.floor(j/2))
+                            vec_index = int(a*(self.nBlkCols/2)+b)
                         else:       #CROMINANCIA
-                            vec_index = int(i+j)
+                            vec_index = int(a*(self.nBlkCols/2)+b)
                         Z = self.Zhvs[ int(abs(self.MV[vec_index][0])) ][ int(abs(self.MV[vec_index][1])) ] 
                 #    QUANTIZAÇÃO/LIMIARIZAÇÃO
                         zcoefs = np.round( coefs/Z )      #Coeficientes normalizados - ^T(u,v)=arred{T(u,v)/Z(u,v)}
@@ -129,9 +135,23 @@ class Encoder:
                         hfcd = hf.fwdhuff(DCant, seq, ch)          #Gera o codigo huffman da subimagem
                         DCant = seq[0]
                         self.NumBits += hfcd[0]
-                        seqhuff += hfcd[1]          
-                #Salvar os codigos em arquivo
-                #fo.write(seqhuff + '\n')
+                        seqhuff += hfcd[1]
+                        if ch == 0:
+                            if j%2 != 0:
+                                b += 1
+                            else:
+                                pass
+                        else:
+                            b += 1
+                    if ch == 0:
+                        if i%2 != 0:
+                            a += 1
+                            b = 0
+                        else:
+                            b = 0
+                    else:
+                        a += 1
+                        b = 0
                 outseq.append(seqhuff)
                 
         #fo.close()
@@ -185,17 +205,17 @@ class Decoder:
         #print '- Running Mjpeg Decoder...'
         hf = h.HuffCoDec(self.hufftables)
         r, c, chnl = self.R, self.C, self.NCHNL
-        
-        #hufcd = self.huffcodes#self.fl.readline()[:-1]
+
+
         if self.mode == '444':
             for ch in range(chnl):                #hufcd = self.fl.readline()[:-1]            #    print hufcd[0:20]
                 nblk, seqrec = hf.invhuff(self.huffcodes[ch], ch)
-                    
+                a, b = [0, 0]
                 for i in range(self.nBlkRows):
                     for j in range(self.nBlkCols):
                 
                         #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
-                        vec_index = int(np.floor(i/2)*self.C+np.floor(j/2))
+                        vec_index = int(a*(self.nBlkCols/2)+b)
                         # Quantization table
                         Z = 0
                         if len(self.motionVec[vec_index]) == 2:
@@ -204,11 +224,16 @@ class Decoder:
                             Z = self.hvstables[abs(self.motionVec[vec_index][1])][abs(self.motionVec[vec_index][2])]
                         else:
                             Z = self.hvstables[int((abs(self.motionVec[vec_index][1])+abs(self.motionVec[vec_index][3]))/2.)][int((abs(self.motionVec[vec_index][2])+abs(self.motionVec[vec_index][4]))/2.)]
-                            
-#                        print("sec " + str(len(seqrec)))
-#                        print("index " + str(i*self.nBlkCols + j))
+      
                         blk = h.zagzig(seqrec[i*self.nBlkCols + j])
                         self.imRaw[r*i:r*i+r, c*j:c*j+c, ch] = np.round_( cv2.idct( blk*Z ))
+                        if j%2 != 0:
+                            b += 1
+                    if i%2 != 0:																												
+                        a += 1
+                        b = 0
+                    else:
+                        b = 0
                         
         elif self.mode == '420':
             #import math as m
@@ -220,7 +245,7 @@ class Decoder:
                 rYmg = [ Y, CrCb[:,:,0], CrCb[:,:,1] ]
                 
             for ch in range(chnl):
-                #hufcd = self.fl.readline()[:-1]
+                a, b = [0, 0]
                 if ch == 0:
                     rBLK = self.nBlkRows
                     cBLK = self.nBlkCols
@@ -235,9 +260,9 @@ class Decoder:
                         #    SELEÇÃO DA MATRIZ DE QUANTIZAÇÃO
                         vec_index = 0
                         if ch == 0: #LUMINANCIA
-                            vec_index = int(np.floor(i/2)*self.C+np.floor(j/2))
+                            vec_index = int(a*(self.nBlkCols/2)+b)
                         else:       #CROMINANCIA
-                            vec_index = int(i+j)
+                            vec_index = int(a*(self.nBlkCols/2)+b)
                         # Quantization table
                         Z = 0
                         if len(self.motionVec[vec_index]) == 2:
@@ -250,6 +275,22 @@ class Decoder:
                         blk = h.zagzig(self.seqrec[i*cBLK + j])
                         #print rYmg[ch][r*i:r*i+r, c*j:c*j+c].shape, ch, i, j
                         rYmg[ch][r*i:r*i+r, c*j:c*j+c] = np.round_( cv2.idct( blk*Z ))
+                        if ch == 0:
+                            if j%2 != 0:
+                                b += 1
+                            else:
+                                pass
+                        else:
+                            b += 1
+                    if ch == 0:
+                        if i%2 != 0:
+                            a += 1
+                            b = 0
+                        else:
+                            b = 0
+                    else:
+                        a += 1
+                        b = 0
             # UPSAMPLE
             if chnl == 1:
                 self.imRaw = rYmg #[:self.Mo, : self.No]
