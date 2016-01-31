@@ -15,7 +15,6 @@ import numpy as np
 
 root = Tk()
 root.withdraw()
-#Tk().withdraw()
 
 fileName = askopenfilename(parent=root, title="Enter with a file name.").__str__()
 if fileName == '': 
@@ -28,15 +27,20 @@ print name
 name = name.split('.')[-1]
 print name
 
+# In order to run the encoder just enter with a video file.
+# In order to run the decoder just enter with a output file (in the output directory).
+
+files = 0       # 0 - Runs all encoder modes for a given video (normal - 444 and 420, hvs - 444 and 420)
+                # 1 - Runs encoder for a given video with the following setup.
+
 quality = 50    # Compression quality.
 sspace = 32    # Search space.
 search = 1        # 0 - Full search; 1 - Parallel hierarchical.
 flat = 10.0    # Qflat value.
 p = 2.0        # Parameter p.
-files = 1    
 
 if name == 'mp4' or name == 'MP4' or name == 'mpg'or name == 'avi' or name == 'AVI':
-    if files == 0:
+    if files == 1:
         for hvsqm in range(2):
             for mode in ['444','420']:
                 print 'HVS = %d mode = %s' %(hvsqm, mode)
