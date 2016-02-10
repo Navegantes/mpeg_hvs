@@ -38,6 +38,9 @@ sspace = 32    # Search space.
 search = 1        # 0 - Full search; 1 - Parallel hierarchical.
 flat = 10.0    # Qflat value.
 p = 2.0        # Parameter p.
+mode = '420'       # 444 or 420
+hvsqm = 0       # Normal or HVS based method
+
 
 if name == 'mp4' or name == 'MP4' or name == 'mpg'or name == 'avi' or name == 'AVI':
     if files == 1:
@@ -46,19 +49,49 @@ if name == 'mp4' or name == 'MP4' or name == 'mpg'or name == 'avi' or name == 'A
                 print 'HVS = %d mode = %s' %(hvsqm, mode)
                 mpeg = codec.Encoder(fileName, quality, sspace, mode, search, hvsqm, flat, p)
                 mpeg.run()
+                filetxt = ''
+                figurename = ''
                 if hvsqm == 0:
                     filetxt = './outputs/normal/' + mode + '/' + fileName.split('/')[-1].split('.')[0] + '.txt'
+                    figurename = './outputs/normal/' + mode + '/' + fileName.split('/')[-1].split('.')[0] + '.jpg'
                 else:
                     filetxt = './outputs/hvs/' + mode + '/' + fileName.split('/')[-1].split('.')[0] + '.txt'
+                    figurename = './outputs/hvs/' + mode + '/' + fileName.split('/')[-1].split('.')[0] + '.jpg'
+                print "Figure name: " + figurename
                 mpeg = codec.Decoder(filetxt)
-                seq = mpeg.run()
+                seq, psnrValues, msimValues = mpeg.run()
                 futils.write_sequence_frames(seq, mpeg.mode, mpeg.hvsqm, filetxt)
+                fig = plt.figure()
+                ax1 = fig.add_subplot(211)
+                psnrMean = np.mean(np.array(psnrValues)[:,0])
+                ax1.plot(range(len(psnrValues)), np.array(psnrValues)[:,0], '-*',label="Values",)
+                ax1.plot(range(len(psnrValues)), np.ones(len(psnrValues))*psnrMean, '-p',label="Mean")
+                legend1 = ax1.legend(loc='upper right', shadow=True)
+                ax1.set_xlabel("Frames")
+                ax1.set_ylabel("psnr")
+                ax1.set_title("PSNR")
+                ax1.grid()
+            
+                ax2 = fig.add_subplot(212)
+                msimMean = np.mean(np.array(msimValues)[:,0])
+                ax2.plot(range(len(msimValues)),np.array(msimValues)[:,0], '-*', label="Values")
+                ax2.plot(range(len(msimValues)), np.ones(len(msimValues))*msimMean, '-p', label="Mean")
+                legend2 = ax2.legend(loc='upper right', shadow=True)
+                ax2.set_xlabel("Frames")
+                ax2.set_ylabel("msim")
+                ax2.set_title("MSIM")
+                ax2.grid()
+                plt.subplots_adjust(hspace=0.3)
+                plt.savefig(figurename)
     else:
-        mpeg = codec.Encoder(fileName, quality = 50, sspace = 16, mode = '420', search = 1, hvsqm = 1, flat = 10.0, p = 2.0)
+        mpeg = codec.Encoder(fileName, quality, sspace, mode, search, hvsqm, flat, p)
         mpeg.run()
                 
 elif name == 'txt' or name == 'TXT':
     videoName = askopenfilename(parent=root, title="Enter with the original video file.").__str__()
+    path = fileName.split('/')
+    figurename = './outputs/' + path[-3] + '/' + path[-2] + '/' + path[-1].split('.')[0] + '.jpg'
+    print "Figure name: " + figurename
     mpeg = codec.Decoder(fileName, videoName)
     seq, psnrValues, msimValues = mpeg.run()
     futils.write_sequence_frames(seq, mpeg.mode, mpeg.hvsqm, fileName)
@@ -83,5 +116,6 @@ elif name == 'txt' or name == 'TXT':
     ax2.set_title("MSIM")
     ax2.grid()
     plt.subplots_adjust(hspace=0.3)
+    plt.savefig(figurename)
 else:
     print('Invalid filename!!!!')
